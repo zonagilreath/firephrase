@@ -1,6 +1,8 @@
 import React from 'react';
 import PlayersList from './components/PlayersList.jsx';
 import SubmittedWordsList from './components/SubmittedWordsList.jsx';
+import JoinGame from './components/JoinGame.jsx';
+import CreateGame from './components/CreateGame.jsx';
 import GameBoard from './components/GameBoard.jsx';
 import firebase from './utils/firebaseConnection.js';
 import generateCharSet from './utils/charsGenerator.js'; 
@@ -11,7 +13,9 @@ export default class App extends React.Component{
     super(props);
     this.db = firebase.firestore();
     this.state = {
-      gameId: 'McSpglLzSV9zTc2suoPD',
+      gameId: '',
+      creatingGame: false,
+      joiningGame: false,
       playerName: '',
       playerId: '',
       players: [],
@@ -21,20 +25,25 @@ export default class App extends React.Component{
   }
 
   componentDidMount(){
-    console.log(window.location.href);
-    this.getChars()
+    const [possibleGameId] = window.location.href.split('/').slice(-1);
+    if (!possibleGameId){
+      console.log('got nothin boss!');
+      this.setState({creatingGame: true})
+    } else{
+      this.connectToGame(possibleGameId)
+      // this.getChars()
+    }
     
   }
 
   connectToGame(gameId){
-    this.db.runTransaction(tx => (
-      tx.get(this.db.collection('games').doc(gameId))
-      .then(gameDoc => {
-        if (!gameDoc.exists){
-          this.setState()
-        }
-      })
-    ))
+    this.db.collection('games').doc(gameId).get().then(gameDoc => {
+      if (!gameDoc.exists){
+        this.setState({creatingGame: true})
+      }else{
+        this.setState({joiningGame: true, gameId})
+      }
+    })
   }
 
   getChars(){
@@ -52,13 +61,23 @@ export default class App extends React.Component{
   }
 
   render(){
-    return (
-      <React.Fragment>
-        <PlayersList players={this.state.players} />
-        <GameBoard
-          chars={this.state.chars}
-          gameRef={this.db.collection('games').doc(this.state.gameId)}/>
-      </React.Fragment>
-    )
+    if (this.state.creatingGame){
+      return <CreateGame />
+    }else if (this.state.joiningGame){
+      return <JoinGame />
+    }else if (this.state.gameExists){
+      return (
+        <React.Fragment>
+          <PlayersList players={this.state.players} />
+          <GameBoard
+            chars={this.state.chars}
+            gameRef={this.db.collection('games').doc(this.state.gameId)}/>
+        </React.Fragment>
+      )
+    }else {
+      return (
+        <h1>welcome</h1>
+      )
+    }
   }
 }
