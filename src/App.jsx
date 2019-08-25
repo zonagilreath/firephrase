@@ -1,7 +1,7 @@
 import React from 'react';
 import PlayersList from './components/PlayersList.jsx';
 import SubmittedWordsList from './components/SubmittedWordsList.jsx';
-import WordInput from './components/WordInput.jsx';
+import GameBoard from './components/GameBoard.jsx';
 import firebase from './utils/firebaseConnection.js';
 import generateCharSet from './utils/charsGenerator.js'; 
 
@@ -44,10 +44,11 @@ export default class App extends React.Component{
   render(){
     return (
       <React.Fragment>
-        <h1>{this.state.chars}</h1>
         <PlayersList players={this.state.players} />
         <SubmittedWordsList words={this.state.submittedWords} />
-        <WordInput gameRef={this.db.collection('games').doc(this.state.gameId)}/>
+        <GameBoard
+          chars={this.state.chars}
+          gameRef={this.db.collection('games').doc(this.state.gameId)}/>
       </React.Fragment>
     )
   }
