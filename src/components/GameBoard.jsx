@@ -11,6 +11,7 @@ export default class GameBoard extends React.Component {
     this.db = firebase.firestore();
     console.log('chars in gameborad constructor',this.props.chars);
     this.state = {
+      gameId: 'McSpglLzSV9zTc2suoPD',
       chars: '',
       unusedChars: [],
       currentInput: '',
@@ -24,7 +25,12 @@ export default class GameBoard extends React.Component {
   }
 
   componentDidMount(){
-    
+    this.db.collection('games').doc(this.state.gameId)
+    .onSnapshot(doc => {
+      const players = doc.data().players;
+      const submittedWords = doc.data().submittedWords;
+      this.setState({players, submittedWords})
+    })
   }
 
   componentDidUpdate(){
@@ -112,6 +118,7 @@ export default class GameBoard extends React.Component {
         <WordInput
           submitWord={this.submitWord}
           inputChangeHandler={this.inputChangeHandler} />
+        <SubmittedWordsList words={this.state.submittedWords} />
       </div>
     )
   }

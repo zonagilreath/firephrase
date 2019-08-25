@@ -12,6 +12,8 @@ export default class App extends React.Component{
     this.db = firebase.firestore();
     this.state = {
       gameId: 'McSpglLzSV9zTc2suoPD',
+      playerName: '',
+      playerId: '',
       players: [],
       chars: '',
       submittedWords: [],
@@ -19,19 +21,27 @@ export default class App extends React.Component{
   }
 
   componentDidMount(){
+    console.log(window.location.href);
     this.getChars()
-    this.db.collection('games').doc(this.state.gameId)
-    .onSnapshot(doc => {
-      const players = doc.data().players;
-      const submittedWords = doc.data().submittedWords;
-      this.setState({players, submittedWords})
-    })
+    
+  }
+
+  connectToGame(gameId){
+    this.db.runTransaction(tx => (
+      tx.get(this.db.collection('games').doc(gameId))
+      .then(gameDoc => {
+        if (!gameDoc.exists){
+          this.setState()
+        }
+      })
+    ))
   }
 
   getChars(){
     const gameRef = this.db.collection('games').doc(this.state.gameId);
     const chars = generateCharSet();
-    gameRef.update({chars})
+    const submittedWords = [];
+    gameRef.update({chars, submittedWords})
     .then(()=>{
       console.log("Document updated");
       this.setState({chars})
@@ -45,7 +55,6 @@ export default class App extends React.Component{
     return (
       <React.Fragment>
         <PlayersList players={this.state.players} />
-        <SubmittedWordsList words={this.state.submittedWords} />
         <GameBoard
           chars={this.state.chars}
           gameRef={this.db.collection('games').doc(this.state.gameId)}/>
