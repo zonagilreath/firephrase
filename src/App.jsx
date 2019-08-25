@@ -22,28 +22,26 @@ export default class App extends React.Component{
       gameStarted: false,
       playerIsGameCreator: false,
       playerName: '',
-      playerId: '',
       players: [],
       chars: '',
       submittedWords: [],
     }
     this.playerJoin = this.playerJoin.bind(this);
+    this.createGame = this.createGame.bind(this);
     this.startGame = this.startGame.bind(this);
   }
 
   componentDidMount(){
     const [possibleGameId] = window.location.href.split('/').slice(-1);
     if (!possibleGameId){
-      console.log('got nothin boss!');
       this.setState({creatingGame: true})
     } else{
       this.connectToGame(possibleGameId)
-      // this.getChars()
     }
-    
   }
 
   connectToGame(gameId){
+    //check url for gameId, join if present else prompt to create game
     this.db.collection('games').doc(gameId).get().then(gameDoc => {
       if (!gameDoc.exists){
         this.setState({creatingGame: true})
@@ -83,6 +81,29 @@ export default class App extends React.Component{
     })
   }
 
+  createGame(playerName){
+    const playerScores = {};
+    playerScores[playerName] = 0;
+    this.db.collection('games').add({
+      creatorPlayer: playerName,
+      players: [playerName],
+      playerScores
+    })
+    .then(gameRef => {
+      this.setState({
+        gameId: gameRef.id,
+        gameRef: gameRef,
+        creatingGame: false,
+        gameExists: true,
+        playerIsGameCreator: true,
+        playerName
+      })
+    })
+    .catch(err => {
+      console.error(err);
+    })
+  }
+
   startGame(){
 
   }
@@ -103,7 +124,8 @@ export default class App extends React.Component{
 
   render(){
     if (this.state.creatingGame){
-      return <CreateGame />
+      return <CreateGame
+              createGame={this.createGame} />
     }else if (this.state.joiningGame){
       return <JoinGame
               playerJoin={this.playerJoin}
