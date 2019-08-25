@@ -1,4 +1,7 @@
 import React from 'react';
+import PlayersList from './components/PlayersList.jsx';
+import SubmittedWordsList from './components/SubmittedWordsList.jsx';
+import WordInput from './components/WordInput.jsx';
 import firebase from './utils/firebaseConnection.js';
 import generateCharSet from './utils/charsGenerator.js'; 
 
@@ -6,38 +9,46 @@ import generateCharSet from './utils/charsGenerator.js';
 export default class App extends React.Component{
   constructor(props){
     super(props);
+    this.db = firebase.firestore();
     this.state = {
+      gameId: 'McSpglLzSV9zTc2suoPD',
+      players: [],
       chars: '',
-      charsList: []
+      submittedWords: [],
     }
   }
 
   componentDidMount(){
     this.getChars()
+    this.db.collection('games').doc(this.state.gameId)
+    .onSnapshot(doc => {
+      const players = doc.data().players;
+      const submittedWords = doc.data().submittedWords;
+      this.setState({players, submittedWords})
+    })
   }
 
   getChars(){
-    const db = firebase.firestore().collection('charsets');
+    const gameRef = this.db.collection('games').doc(this.state.gameId);
     const chars = generateCharSet();
-    db.add({chars})
-    .then((docRef)=>{
-      console.log("Document written with ID: ", docRef.id);
+    gameRef.update({chars})
+    .then(()=>{
+      console.log("Document updated");
+      this.setState({chars})
     })
-    .then(()=>(db.get()))
-    .then(querySnap => {
-      const charsList = [];
-      querySnap.forEach(doc => {
-        console.log(doc.data());
-        charsList.push(doc.data())})
-      return this.setState({chars, charsList})
-    })
-    .then(()=>console.log(this.state))
     .catch(function(error) {
       console.error("Error adding document: ", error);
     });
   }
 
   render(){
-    return (<h1>{this.state.chars}</h1>)
+    return (
+      <React.Fragment>
+        <h1>{this.state.chars}</h1>
+        <PlayersList players={this.state.players} />
+        <SubmittedWordsList words={this.state.submittedWords} />
+        <WordInput gameRef={this.db.collection('games').doc(this.state.gameId)}/>
+      </React.Fragment>
+    )
   }
 }
