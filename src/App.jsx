@@ -3,6 +3,7 @@ import PlayersList from './components/PlayersList.jsx';
 import SubmittedWordsList from './components/SubmittedWordsList.jsx';
 import JoinGame from './components/JoinGame.jsx';
 import CreateGame from './components/CreateGame.jsx';
+import WaitingRoom from './components/WaitingRoom.jsx';
 import GameBoard from './components/GameBoard.jsx';
 import firebase from './utils/firebaseConnection.js';
 import generateCharSet from './utils/charsGenerator.js'; 
@@ -14,14 +15,20 @@ export default class App extends React.Component{
     this.db = firebase.firestore();
     this.state = {
       gameId: '',
+      gameRef: null,
       creatingGame: false,
       joiningGame: false,
+      gameExists: false,
+      gameStarted: false,
+      playerIsGameCreator: false,
       playerName: '',
       playerId: '',
       players: [],
       chars: '',
       submittedWords: [],
     }
+    this.playerJoin = this.playerJoin.bind(this);
+    this.startGame = this.startGame.bind(this);
   }
 
   componentDidMount(){
@@ -41,18 +48,52 @@ export default class App extends React.Component{
       if (!gameDoc.exists){
         this.setState({creatingGame: true})
       }else{
-        this.setState({joiningGame: true, gameId})
+        const gameRef = this.db.collection('games').doc(gameId);
+        this.setState({joiningGame: true, gameId, gameRef})
       }
     })
   }
 
+  playerJoin(playerName){
+    // open a transaction on the database
+    // read current game doc and check if playerName already exists
+    // if not add player and launch GameBoard
+    console.log(playerName);
+    this.db.runTransaction(tx => (
+      tx.get(this.state.gameRef)
+      .then(gameDoc => {
+        const data = gameDoc.data();
+        if (data.players.includes(playerName)){
+          throw 'Name is taken!'
+        }
+        const players = data.players.concat(playerName);
+        tx.update(this.state.gameRef, {players})
+      })
+    ))
+    .then(()=>{
+      console.log('player joined');
+      this.setState({
+        playerName,
+        joiningGame: false,
+        gameExists: true
+      })
+    })
+    .catch((err)=>{
+      console.log(err);
+    })
+  }
+
+  startGame(){
+
+  }
+
   getChars(){
-    const gameRef = this.db.collection('games').doc(this.state.gameId);
+    const gameRef = this.state.gameRef;
     const chars = generateCharSet();
     const submittedWords = [];
     gameRef.update({chars, submittedWords})
     .then(()=>{
-      console.log("Document updated");
+      console.log("word submitted");
       this.setState({chars})
     })
     .catch(function(error) {
@@ -64,19 +105,27 @@ export default class App extends React.Component{
     if (this.state.creatingGame){
       return <CreateGame />
     }else if (this.state.joiningGame){
-      return <JoinGame />
+      return <JoinGame
+              playerJoin={this.playerJoin}
+              gameRef={this.state.gameRef}/>
     }else if (this.state.gameExists){
-      return (
-        <React.Fragment>
-          <PlayersList players={this.state.players} />
-          <GameBoard
-            chars={this.state.chars}
-            gameRef={this.db.collection('games').doc(this.state.gameId)}/>
-        </React.Fragment>
-      )
+      if (this.state.gameStarted){
+        return (
+          <React.Fragment>
+            <PlayersList players={this.state.players} />
+            <GameBoard
+              chars={this.state.chars}
+              gameRef={this.db.collection('games').doc(this.state.gameId)}/>
+          </React.Fragment>
+        )
+      }else{
+        return <WaitingRoom
+                isCreator={this.state.playerIsGameCreator}
+                startGame={this.startGame}/>
+      }
     }else {
       return (
-        <h1>welcome</h1>
+        <h1>Loading</h1>
       )
     }
   }
