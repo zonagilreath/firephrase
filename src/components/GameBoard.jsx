@@ -24,11 +24,12 @@ export default class GameBoard extends React.Component {
       gameRef: this.props.gameRef,
       playerName: this.props.playerName,
       players: this.props.players,
+      playerScores: {},
       chars: this.props.chars,
       unusedChars: this.setUnusedChars(this.props.chars, true),
       currentInput: '',
       submittedWords: [],
-      remainingTime: 60,
+      remainingTime: 10,
     }
   }
 
@@ -50,7 +51,7 @@ export default class GameBoard extends React.Component {
     const remainingTime = oldTime - 1;
     if (remainingTime <= 0){
       clearInterval(this.timerId);
-      this.props.gameOver();
+      this.props.gameOver(this.state.playerScores);
     }else{
       this.setState({remainingTime});
     }
@@ -102,10 +103,8 @@ export default class GameBoard extends React.Component {
   addLetterToInput(inputString){
     const newChar = inputString.charAt(inputString.length - 1);
     const charLocation = this.state.unusedChars.indexOf(newChar);
-    console.log('charloc', charLocation);
     if (charLocation >= 0){
       const currentInput = this.state.currentInput + newChar;
-      console.log(currentInput);
       const unusedChars = [
         ...this.state.unusedChars.slice(0, charLocation),
         ...this.state.unusedChars.slice(charLocation + 1)
@@ -125,9 +124,6 @@ export default class GameBoard extends React.Component {
   }
 
   inputChangeHandler(e){
-    console.log('input changed!');
-    console.log(e.target.value.length);
-    console.log(this.state.currentInput.length);
     const inputString = e.target.value.toUpperCase();
     if (e.target.value.length > this.state.currentInput.length){
       this.addLetterToInput(inputString)

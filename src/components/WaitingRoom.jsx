@@ -4,7 +4,11 @@ import PlayersList from './PlayersList.jsx'
 export default function WaitingRoom(props){
   return (
     <React.Fragment>
-      <h1>WaitingRoom</h1>
+      <h1>
+        {props.isCreator ?
+          'Start the game whenever you\'re ready' :
+          `Waiting for ${props.players[0]} to start the game...`}
+      </h1>
       <PlayersList players={props.players}/>
       {props.isCreator ? (
         <React.Fragment>

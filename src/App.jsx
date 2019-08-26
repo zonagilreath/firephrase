@@ -25,6 +25,7 @@ export default class App extends React.Component{
       playerIsGameCreator: false,
       playerName: '',
       players: [],
+      playerScores: {},
       chars: '',
       submittedWords: [],
     }
@@ -51,7 +52,6 @@ export default class App extends React.Component{
         const players = data.players;
         const gameStarted = data.gameStarted;
         const chars = data.chars;
-        console.log('changing state from update listener');
         if (prevState.players.length !== players.length ||
             prevState.gameStarted !== gameStarted){
           this.setState({players, gameStarted, chars})
@@ -127,7 +127,6 @@ export default class App extends React.Component{
     // open a transaction on the database
     // read current game doc and check if playerName already exists
     // if not add player to player lists and scores map and launch GameBoard
-    console.log(playerName);
     this.db.runTransaction(tx => (
       tx.get(this.state.gameRef)
       .then(gameDoc => {
@@ -153,8 +152,8 @@ export default class App extends React.Component{
     })
   }
 
-  gameOver(){
-    this.setState({gameOver: true, gameExists: false});
+  gameOver(playerScores){
+    this.setState({gameOver: true, gameExists: false, playerScores});
   }
 
   render(){
@@ -186,7 +185,9 @@ export default class App extends React.Component{
                 players={this.state.players}/>
       }
     }else if (this.state.gameOver){
-      return <GameOver />
+      return <GameOver
+              players={this.state.players}
+              playerScores={this.state.playerScores}/>
     }else {
       return <h1>Loading</h1>
     }
