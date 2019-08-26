@@ -5,6 +5,7 @@ import JoinGame from './components/JoinGame.jsx';
 import CreateGame from './components/CreateGame.jsx';
 import WaitingRoom from './components/WaitingRoom.jsx';
 import GameBoard from './components/GameBoard.jsx';
+import GameOver from './components/GameOver.jsx';
 import firebase from './utils/firebaseConnection.js';
 import generateCharSet from './utils/charsGenerator.js'; 
 
@@ -20,6 +21,7 @@ export default class App extends React.Component{
       joiningGame: false,
       gameExists: false,
       gameStarted: false,
+      gameOver: false,
       playerIsGameCreator: false,
       playerName: '',
       players: [],
@@ -29,6 +31,7 @@ export default class App extends React.Component{
     this.playerJoin = this.playerJoin.bind(this);
     this.createGame = this.createGame.bind(this);
     this.startGame = this.startGame.bind(this);
+    this.gameOver = this.gameOver.bind(this);
   }
 
   componentDidMount(){
@@ -38,6 +41,74 @@ export default class App extends React.Component{
     } else{
       this.connectToGame(possibleGameId)
     }
+  }
+
+  componentDidUpdate(_, prevState){
+    // add firestore listener for new players, game start, and char set
+    if (this.state.gameRef){
+      this.state.gameRef.onSnapshot(doc => {
+        const data = doc.data();
+        const players = data.players;
+        const gameStarted = data.gameStarted;
+        const chars = data.chars;
+        console.log('changing state from update listener');
+        if (prevState.players.length !== players.length ||
+            prevState.gameStarted !== gameStarted){
+          this.setState({players, gameStarted, chars})
+        }
+      })
+    }
+  }
+
+
+  getChars(){
+    const gameRef = this.state.gameRef;
+    const chars = generateCharSet();
+    gameRef.update({chars})
+    .then(()=>{
+      console.log("chars posted");
+    })
+    .catch(function(error) {
+      console.error("Error adding document: ", error);
+    });
+  }
+
+  createGame(playerName){
+    const playerScores = {};
+    playerScores[playerName] = 0;
+    this.db.collection('games').add({
+      creatorPlayer: playerName,
+      players: [playerName],
+      chars: '',
+      submittedWords: [],
+      playerScores
+    })
+    .then(gameRef => {
+      this.setState({
+        gameId: gameRef.id,
+        gameRef: gameRef,
+        creatingGame: false,
+        gameExists: true,
+        playerIsGameCreator: true,
+        gameStarted: false,
+        playerName
+      })
+    })
+    .catch(err => {
+      console.error(err);
+    })
+  }
+
+  startGame(){
+    const gameRef = this.state.gameRef;
+    const chars = generateCharSet();
+    gameRef.update({chars, gameStarted: true})
+    .then(()=>{
+      console.log("chars posted");
+    })
+    .catch(function(error) {
+      console.error("Error adding document: ", error);
+    });
   }
 
   connectToGame(gameId){
@@ -55,7 +126,7 @@ export default class App extends React.Component{
   playerJoin(playerName){
     // open a transaction on the database
     // read current game doc and check if playerName already exists
-    // if not add player and launch GameBoard
+    // if not add player to player lists and scores map and launch GameBoard
     console.log(playerName);
     this.db.runTransaction(tx => (
       tx.get(this.state.gameRef)
@@ -65,11 +136,12 @@ export default class App extends React.Component{
           throw 'Name is taken!'
         }
         const players = data.players.concat(playerName);
-        tx.update(this.state.gameRef, {players})
+        const playerScores = data.playerScores;
+        playerScores[playerName] = 0;
+        tx.update(this.state.gameRef, {players, playerScores})
       })
     ))
     .then(()=>{
-      console.log('player joined');
       this.setState({
         playerName,
         joiningGame: false,
@@ -81,48 +153,12 @@ export default class App extends React.Component{
     })
   }
 
-  createGame(playerName){
-    const playerScores = {};
-    playerScores[playerName] = 0;
-    this.db.collection('games').add({
-      creatorPlayer: playerName,
-      players: [playerName],
-      playerScores
-    })
-    .then(gameRef => {
-      this.setState({
-        gameId: gameRef.id,
-        gameRef: gameRef,
-        creatingGame: false,
-        gameExists: true,
-        playerIsGameCreator: true,
-        playerName
-      })
-    })
-    .catch(err => {
-      console.error(err);
-    })
-  }
-
-  startGame(){
-
-  }
-
-  getChars(){
-    const gameRef = this.state.gameRef;
-    const chars = generateCharSet();
-    const submittedWords = [];
-    gameRef.update({chars, submittedWords})
-    .then(()=>{
-      console.log("word submitted");
-      this.setState({chars})
-    })
-    .catch(function(error) {
-      console.error("Error adding document: ", error);
-    });
+  gameOver(){
+    this.setState({gameOver: true, gameExists: false});
   }
 
   render(){
+    // render views conditionally based on game state
     if (this.state.creatingGame){
       return <CreateGame
               createGame={this.createGame} />
@@ -134,21 +170,25 @@ export default class App extends React.Component{
       if (this.state.gameStarted){
         return (
           <React.Fragment>
-            <PlayersList players={this.state.players} />
             <GameBoard
               chars={this.state.chars}
-              gameRef={this.db.collection('games').doc(this.state.gameId)}/>
+              gameRef={this.state.gameRef}
+              playerName={this.state.playerName}
+              players={this.state.players}
+              gameOver={this.gameOver} />
           </React.Fragment>
         )
       }else{
         return <WaitingRoom
+                gameId={this.state.gameId}
                 isCreator={this.state.playerIsGameCreator}
-                startGame={this.startGame}/>
+                startGame={this.startGame}
+                players={this.state.players}/>
       }
+    }else if (this.state.gameOver){
+      return <GameOver />
     }else {
-      return (
-        <h1>Loading</h1>
-      )
+      return <h1>Loading</h1>
     }
   }
 }

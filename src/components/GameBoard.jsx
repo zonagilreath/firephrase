@@ -1,5 +1,8 @@
 import React from 'react';
 import firebase from '../utils/firebaseConnection.js';
+import generateCharSet from '../utils/charsGenerator.js'; 
+import letterPoints from '../utils/letterPoints.js';
+import PlayersList from './PlayersList.jsx';
 import LettersDisplay from './LettersDisplay.jsx';
 import WordInput from './WordInput.jsx';
 import SubmittedWordsList from './SubmittedWordsList.jsx';
@@ -9,40 +12,59 @@ export default class GameBoard extends React.Component {
   constructor(props){
     super(props);
     this.db = firebase.firestore();
-    console.log('chars in gameborad constructor',this.props.chars);
-    this.state = {
-      gameId: 'McSpglLzSV9zTc2suoPD',
-      chars: '',
-      unusedChars: [],
-      currentInput: '',
-      submittedWords: [],
-    }
     this.submitWord = this.submitWord.bind(this)
     this.setUnusedChars = this.setUnusedChars.bind(this)
     this.inputChangeHandler = this.inputChangeHandler.bind(this)
     this.addLetterToInput = this.addLetterToInput.bind(this)
     this.removeLetterFromInput = this.removeLetterFromInput.bind(this)
-  }
-
-  componentDidMount(){
-    this.db.collection('games').doc(this.state.gameId)
-    .onSnapshot(doc => {
-      const players = doc.data().players;
-      const submittedWords = doc.data().submittedWords;
-      this.setState({players, submittedWords})
-    })
-  }
-
-  componentDidUpdate(){
-    if (this.props.chars !== this.state.chars){
-      this.setUnusedChars();
+    this.countDown = this.countDown.bind(this)
+    this.timerId = 0;
+    this.state = {
+      gameId: this.props.gameId,
+      gameRef: this.props.gameRef,
+      playerName: this.props.playerName,
+      players: this.props.players,
+      chars: this.props.chars,
+      unusedChars: this.setUnusedChars(this.props.chars, true),
+      currentInput: '',
+      submittedWords: [],
+      remainingTime: 60,
     }
   }
 
-  setUnusedChars(){
-    const chars = this.props.chars
+  componentDidMount(){
+    // listen for new words and score updates
+    this.state.gameRef.onSnapshot(doc => {
+      const data = doc.data();
+      const submittedWords = data.submittedWords;
+      const playerScores = data.playerScores;
+      this.setState({submittedWords, playerScores})
+    })
+    this.timerId = setInterval(this.countDown, 1000)
+  }
+
+  countDown(){
+    // decrement time every second
+    // clear interval and game when mtime runs out
+    const oldTime = this.state.remainingTime;
+    const remainingTime = oldTime - 1;
+    if (remainingTime <= 0){
+      clearInterval(this.timerId);
+      this.props.gameOver();
+    }else{
+      this.setState({remainingTime});
+    }
+  }
+
+  setUnusedChars(chars, noUpdate){
+    if (!chars){
+      chars = this.state.chars;
+    }
     const unusedChars = chars.split('');
-    this.setState({chars, unusedChars});
+    if (noUpdate){
+      return unusedChars;
+    }
+    this.setState({chars, unusedChars, currentInput: ''});
   }
 
   submitWord(e){
@@ -56,8 +78,12 @@ export default class GameBoard extends React.Component {
           if (data.submittedWords.includes(newWord)){
             throw 'Word already submitted!'
           }
+          const playerScores = data.playerScores
+          for (let letter of newWord){
+            playerScores[this.state.playerName] += letterPoints[letter.toLowerCase()]
+          }
           const updatedWords = data.submittedWords.concat(newWord);
-          tx.update(this.props.gameRef, {submittedWords: updatedWords})
+          tx.update(this.props.gameRef, {playerScores, submittedWords: updatedWords})
         })
       ))
       .then(()=>{
@@ -67,9 +93,8 @@ export default class GameBoard extends React.Component {
         console.log(err);
       })
       .then(()=>{
-        this.setUnusedChars();
         document.getElementById('wordInput').value = '';
-        this.setState({currentInput: ''})
+        this.setUnusedChars();
       });
     }
   }
@@ -111,9 +136,14 @@ export default class GameBoard extends React.Component {
     }
   }
 
+
   render(){
     return (
       <div>
+        <PlayersList
+          players={this.state.players}
+          playerScores={this.state.playerScores}/>
+        <Timer time={this.state.remainingTime}/>
         <LettersDisplay unusedChars={this.state.unusedChars}/>
         <WordInput
           submitWord={this.submitWord}
