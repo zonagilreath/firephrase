@@ -4,6 +4,8 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 
 const useStyles = makeStyles({
   root: {
+    minHeight: 20,
+    width: '40%',
     flexGrow: 1,
   },
 });
