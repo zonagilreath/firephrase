@@ -7,6 +7,7 @@ import LettersDisplay from './LettersDisplay.jsx';
 import WordInput from './WordInput.jsx';
 import SubmittedWordsList from './SubmittedWordsList.jsx';
 import Timer from './Timer.jsx';
+import Grid from '@material-ui/core/Grid';
 
 export default class GameBoard extends React.Component {
   constructor(props){
@@ -135,7 +136,11 @@ export default class GameBoard extends React.Component {
 
   render(){
     return (
-      <div>
+      <Grid
+        container
+        direction="column"
+        justify="center"
+        alignItems="center">
         <PlayersList
           players={this.state.players}
           playerScores={this.state.playerScores}/>
@@ -145,7 +150,7 @@ export default class GameBoard extends React.Component {
           submitWord={this.submitWord}
           inputChangeHandler={this.inputChangeHandler} />
         <SubmittedWordsList words={this.state.submittedWords} />
-      </div>
+      </Grid>
     )
   }
 }

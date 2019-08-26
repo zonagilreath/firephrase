@@ -1,4 +1,6 @@
 import React from 'react';
+import Container from '@material-ui/core/Container';
+import CssBaseline from '@material-ui/core/CssBaseline';
 import PlayersList from './components/PlayersList.jsx';
 import SubmittedWordsList from './components/SubmittedWordsList.jsx';
 import JoinGame from './components/JoinGame.jsx';
@@ -36,6 +38,7 @@ export default class App extends React.Component{
   }
 
   componentDidMount(){
+    // check url path for gameId, try to join with game id 
     const [possibleGameId] = window.location.href.split('/').slice(-1);
     if (!possibleGameId){
       this.setState({creatingGame: true})
@@ -58,19 +61,6 @@ export default class App extends React.Component{
         }
       })
     }
-  }
-
-
-  getChars(){
-    const gameRef = this.state.gameRef;
-    const chars = generateCharSet();
-    gameRef.update({chars})
-    .then(()=>{
-      console.log("chars posted");
-    })
-    .catch(function(error) {
-      console.error("Error adding document: ", error);
-    });
   }
 
   createGame(playerName){
@@ -100,9 +90,8 @@ export default class App extends React.Component{
   }
 
   startGame(){
-    const gameRef = this.state.gameRef;
     const chars = generateCharSet();
-    gameRef.update({chars, gameStarted: true})
+    this.state.gameRef.update({chars, gameStarted: true})
     .then(()=>{
       console.log("chars posted");
     })
@@ -158,38 +147,38 @@ export default class App extends React.Component{
 
   render(){
     // render views conditionally based on game state
-    if (this.state.creatingGame){
-      return <CreateGame
-              createGame={this.createGame} />
-    }else if (this.state.joiningGame){
-      return <JoinGame
+    return (
+      <React.Fragment>
+        <CssBaseline />
+        <Container maxWidth="md">
+          {(this.state.creatingGame) ? (
+            <CreateGame createGame={this.createGame} />
+          ) : (this.state.joiningGame ) ? (
+            <JoinGame
               playerJoin={this.playerJoin}
               gameRef={this.state.gameRef}/>
-    }else if (this.state.gameExists){
-      if (this.state.gameStarted){
-        return (
-          <React.Fragment>
+          ) : (this.state.gameExists && this.state.gameStarted) ? (
             <GameBoard
               chars={this.state.chars}
               gameRef={this.state.gameRef}
               playerName={this.state.playerName}
               players={this.state.players}
               gameOver={this.gameOver} />
-          </React.Fragment>
-        )
-      }else{
-        return <WaitingRoom
-                gameId={this.state.gameId}
-                isCreator={this.state.playerIsGameCreator}
-                startGame={this.startGame}
-                players={this.state.players}/>
-      }
-    }else if (this.state.gameOver){
-      return <GameOver
+          ) : (this.state.gameExists) ? (
+            <WaitingRoom
+              gameId={this.state.gameId}
+              isCreator={this.state.playerIsGameCreator}
+              startGame={this.startGame}
+              players={this.state.players}/>
+          ) : (this.state.gameOver) ? (
+            <GameOver
               players={this.state.players}
               playerScores={this.state.playerScores}/>
-    }else {
-      return <h1>Loading</h1>
-    }
+          ) : (
+            <h1>Loading</h1>
+          )}
+        </Container>
+      </React.Fragment>
+    );
   }
 }
