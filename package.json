@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A realtime multiplayer word game built with React and Google Firebase",
   "main": "index.js",
+  "homepage": "https://github.com/zonagilreath/firephrase#readme",
   "scripts": {
     "build": "webpack --mode production",
     "build-dev": "webpack -d -w",
@@ -17,7 +18,6 @@
   "bugs": {
     "url": "https://github.com/zonagilreath/firephrase/issues"
   },
-  "homepage": "https://github.com/zonagilreath/firephrase#readme",
   "dependencies": {
     "@material-ui/core": "^4.3.3",
     "@material-ui/icons": "^4.2.1",
@@ -36,6 +36,8 @@
     "@babel/preset-env": "^7.5.5",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.5.5",
+    "gh-pages": "^2.1.1",
+    "terser-webpack-plugin": "^1.4.1",
     "webpack": "^4.39.2",
     "webpack-cli": "^3.3.7",
     "webpack-dev-server": "^3.8.0"

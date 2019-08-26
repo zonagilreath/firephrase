@@ -57,7 +57,7 @@ export default function WaitingRoom(props){
             type="submit"
             onClick={props.startGame}
             className={classes.button}>
-            Create game
+            Start game
           </Button>
         </Grid>
       ) : (null)}
