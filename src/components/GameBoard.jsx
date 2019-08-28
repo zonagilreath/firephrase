@@ -30,7 +30,7 @@ export default class GameBoard extends React.Component {
       unusedChars: this.setUnusedChars(this.props.chars, true),
       currentInput: '',
       submittedWords: [],
-      remainingTime: 150,
+      remainingTime: 120,
     }
   }
 

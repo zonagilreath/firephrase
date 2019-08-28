@@ -1,4 +1,5 @@
 import React from 'react';
+import SubmittedWordsList from './SubmittedWordsList.jsx';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import List from '@material-ui/core/List';
@@ -8,7 +9,7 @@ import FaceIcon from '@material-ui/icons/Face';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 
-export default function SubmittedWordsList(props){
+export default function GameOver(props){
   const players = props.players.slice();
   players.sort((a, b)=> props.playerScores[b] - props.playerScores[a])
   return (
@@ -34,6 +35,7 @@ export default function SubmittedWordsList(props){
       }}>
         Start a new game
       </Button>
+      <SubmittedWordsList words={props.words} />
     </Grid>
   )
 }

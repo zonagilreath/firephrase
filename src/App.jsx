@@ -55,9 +55,10 @@ export default class App extends React.Component{
         const players = data.players;
         const gameStarted = data.gameStarted;
         const chars = data.chars;
+        const submittedWords = data.submittedWords;
         if (prevState.players.length !== players.length ||
             prevState.gameStarted !== gameStarted){
-          this.setState({players, gameStarted, chars})
+          this.setState({players, gameStarted, chars, submittedWords})
         }
       })
     }
@@ -172,6 +173,7 @@ export default class App extends React.Component{
               players={this.state.players}/>
           ) : (this.state.gameOver) ? (
             <GameOver
+              words={this.state.submittedWords}
               players={this.state.players}
               playerScores={this.state.playerScores}/>
           ) : (
