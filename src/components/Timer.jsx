@@ -24,7 +24,7 @@ export default function Timer(props){
       });
     }
 
-    const timer = setInterval(progress, 60);
+    const timer = setInterval(progress, 150);
     return () => {
       clearInterval(timer);
     };

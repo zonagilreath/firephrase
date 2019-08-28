@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A realtime multiplayer word game built with React and Google Firebase",
   "main": "index.js",
-  "homepage": "https://zonagilreath.github.io/firephrase/",
+  "homepage": ".",
   "scripts": {
     "build": "webpack --mode production",
     "build-dev": "webpack -d -w",
