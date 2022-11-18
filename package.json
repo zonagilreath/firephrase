@@ -41,7 +41,7 @@
     "gh-pages": "^2.1.1",
     "terser-webpack-plugin": "^1.4.1",
     "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7",
+    "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.8.0"
   }
 }
